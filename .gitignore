@@ -187,3 +187,6 @@ futtop/*
 
 *.mat
 *experimental*
+# CP1 run artifacts
+logs/
+checkpoints/
