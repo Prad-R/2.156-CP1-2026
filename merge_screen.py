@@ -119,14 +119,14 @@ for t in range(len(REFERENCE_POINTS)):
     for label, i in picks:
         merged[i] = f"{merged[i]} and {label.lower()}" if i in merged else label
     picks = [(label, i) for i, label in merged.items()]
-    fig, axs = plt.subplots(len(picks), 2, figsize=(11, 5 * len(picks)), squeeze=False)
-    for row, (label, i) in enumerate(picks):
+    fig, axs = plt.subplots(2, len(picks), figsize=(5.5 * len(picks), 10.5), squeeze=False)
+    for col, (label, i) in enumerate(picks):
         m = submission[f"Problem {t + 1}"][i]
-        visualizer(m["x0"], m["edges"], m["fixed_joints"], m["motor"], highlight=m["target_joint"], ax=axs[row, 0])
-        axs[row, 0].set_title(f"{label}: distance {F[i, 0]:.3f}, material {F[i, 1]:.2f}, {len(m['x0'])} joints")
+        visualizer(m["x0"], m["edges"], m["fixed_joints"], m["motor"], highlight=m["target_joint"], ax=axs[0, col])
+        axs[0, col].set_title(f"{label}\ndistance {F[i, 0]:.3f}, material {F[i, 1]:.2f}, {len(m['x0'])} joints")
         traced = solver(m["x0"], m["edges"], m["fixed_joints"], m["motor"])[m["target_joint"]]
-        engine.visualize_single_comparison(traced, targets[t], ax=axs[row, 1])
-        axs[row, 1].set_title("Traced curve (orange) on target (blue)")
+        engine.visualize_single_comparison(traced, targets[t], ax=axs[1, col])
+        axs[1, col].set_title("Traced curve (orange) on target (blue)")
     fig.suptitle(f"{NAMES[t]} — merge {STAMP}", fontsize=15)
     fig.tight_layout()
     fig.savefig(f"{OUT}/best_{t + 1}.png", dpi=120)
@@ -136,3 +136,7 @@ latest = f"{args.out}/{args.name}/latest"
 shutil.rmtree(latest, ignore_errors=True)
 shutil.copytree(OUT, latest)
 print(f"saved {OUT} (also copied to {latest})")
+
+# ---- keep submissions/best_submission.npy current and push it for the team
+from publish_best import publish
+publish(submission, score, f"screen merge {STAMP}")
