@@ -4,6 +4,16 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Best submission is published to GitHub automatically
+- Added `publish_best.py`: keeps `submissions/best_submission.npy` as the best found so far, tracked per problem, with its score in `submissions/best_submission.json`. `merge_screen.py` calls it at the end of every merge; when any problem improves it re-scores, commits and pushes on its own.
+- Tested with merge job 24967804 (16:35): pushed from the compute node as commit `49e1e81`, overall score **2.68** (hypervolume 4.48 / 6.18 / 16.70).
+- Added `submissions/README.md` with fetch and load instructions for teammates.
+- Note: the Kangaroo 3 front includes three two-joint designs (a bare crank tracing a circle). The course scorer accepts them.
+
+### Slide deck as PDF
+- `slides/build_deck.py` now also writes `slides/deck.pdf` (one page per slide) and reads the screening numbers from the latest merge. PDF export uses WeasyPrint in a separate env, `2.156_slides`.
+- Best-mechanism figures are now landscape (one column per pick); a design that wins two picks is drawn once.
+
 ### Every merge now saves drawings of the best mechanisms
 - `merge_screen.py` writes each merge to its own folder `results/screen/<timestamp>/` (nothing is overwritten) and mirrors the newest to `results/screen/latest/`.
 - New `best_1.png` to `best_3.png`: for each target, the most accurate, best-balanced and least-material designs, drawn as mechanisms next to their traced curve on the target.

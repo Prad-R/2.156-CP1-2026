@@ -10,11 +10,13 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - **Git:** each person works only on their own branch, and commits and pushes there after each change. Prad's is `prads-branch`; a teammate uses the branch they created. Check `git branch --show-current` and who you are working with before committing, and never touch someone else's branch. `main` stays identical to the course repo.
 - **Team:** two teammates work independently on separate branches; at the end they will pick one approach.
 - **`UPDATES.md`:** add an entry for every change made (newest first, dated, with commit hash and job IDs). It is the user's change log.
-- **Slide deck:** whenever there is a significant result, add slides so the user can follow what is happening. The deck is local and git-ignored (user's choice, 2026-10-05; an earlier claude.ai deck was dropped): edit `slides/build_deck.py` (append `slide(...)` calls before the final status slide, update the status slide) and rebuild with `~/.conda/envs/2.156_cp_1/bin/python slides/build_deck.py`, which writes the self-contained `slides/deck.html`.
+- **Slide deck:** whenever there is a significant result, add slides so the user can follow what is happening. The deck is local and git-ignored (user's choice, 2026-10-05): edit `slides/build_deck.py` (append `slide(...)` calls before the final status slide) and rebuild with `~/.conda/envs/2.156_slides/bin/python slides/build_deck.py`, which writes `slides/deck.html` and `slides/deck.pdf` (the user wants the PDF). Screening numbers are read from `results/screen/latest/summary.json`. Layout must stay table/block based: WeasyPrint mis-renders nested flex.
+- **Best submission:** `submissions/best_submission.npy` must always be the best found so far and be on GitHub for the team. `publish_best.publish(submission, score, source)` does this (per-problem best, re-score, commit, push); `merge_screen.py` calls it. Any new pipeline that produces a submission must call it too. These automated commits appear on the branch between manual ones.
 - **This file:** keep it current as context for future sessions.
 
 ## Environment
 
+- Conda env `2.156_slides` holds WeasyPrint and poppler for the PDF deck only.
 - Conda env `2.156_cp_1` (`module load miniforge/26.7.2-0`; python at `~/.conda/envs/2.156_cp_1/bin/python`). Python 3.10, jax 0.5.3, pymoo 0.6.1, numpy 2.0.0, `gh` (logged in as `Prad-R`).
 - `conda run` does not forward stdin; call the env's python directly for heredocs.
 - Remotes: `origin` = `git@github.com:Prad-R/2.156-CP1-2026.git` (private); `upstream` = course repo, push disabled.
@@ -47,6 +49,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `LINKS/` — course library: `Optimization` (`Tools`, `DifferentiableTools`, `MechanismRandomizer`), `Kinematics.MechanismSolver`, `Geometry.CurveEngine`, `Visualization`, `CP` (limits, normalizers, scoring).
 - `screen.py` — mass random sampling and screening for all three targets (Slurm array, one checkpoint per worker in `checkpoints/screen/worker_N.pkl`, readable summary in `worker_N.json`). Each checkpoint holds per-target Pareto `fronts` and the 2000 most accurate `seeds` (pruned mechanisms, already scaled). Uses its own skeleton generator: the course `MechanismRandomizer._skeleton_only` recurses without bound at higher ground probabilities.
 - `merge_screen.py` — merges worker checkpoints (read-only, safe while workers run) and scores with `evaluate_submission`. Each merge goes to `results/screen/<timestamp>/` (`submission.npy`, `summary.json`, `fronts.png`, `best_<k>.png` drawings of the best mechanisms per target); `results/screen/latest/` mirrors the newest. Commit each merge folder.
+- `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
 
@@ -62,6 +65,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - 2026-10-05 baseline (job 24959498, Kangaroo 2 only): seeded GA hypervolume 0.204, after gradient step 0.408; scored submission 0.045 overall.
 - 2026-10-05 16:13 mass screening after about 1 worker-hour (workers 24964610, merge 24964619): official overall score 2.61; hypervolume 4.14 / 6.16 / 16.62, normalized 2.07 / 4.11 / 1.66; best distance 0.19 / 0.51 / 0.87. Workers budgeted 4 h each.
 - 2026-10-05 16:23 second merge (job 24967031, 2.7M mechanisms): overall 2.63; hypervolume 4.26 / 6.16 / 16.65. Gains from random screening are flattening.
+- 2026-10-05 16:35 merge (job 24967804): overall 2.68; hypervolume 4.48 / 6.18 / 16.70. Kangaroo 3 front includes three bare-crank (2-joint) designs; user has been told, no decision yet on keeping them.
 
 ## Open questions
 
