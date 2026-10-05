@@ -1,0 +1,41 @@
+{
+ "merged_at": "20261005-162333",
+ "workers": 4,
+ "worker_hours": 1.62,
+ "mechanisms_sampled": 2707456,
+ "curves_screened": 11882762,
+ "official_evaluations": 2855385,
+ "score": {
+  "Overall Score": 2.6344671286223025,
+  "Score Breakdown": {
+   "Problem 1": 4.258368087139953,
+   "Problem 2": 6.164391729033526,
+   "Problem 3": 16.646228562745804
+  },
+  "Normalized Score Breakdown": {
+   "Problem 1": 2.1291840435699765,
+   "Problem 2": 4.109594486022351,
+   "Problem 3": 1.6646228562745804
+  }
+ },
+ "front_size": [
+  37,
+  27,
+  41
+ ],
+ "best_distance": [
+  0.19255371391773224,
+  0.5146711468696594,
+  0.8735781311988831
+ ],
+ "least_material": [
+  0.8130620718002319,
+  0.664537787437439,
+  0.2676951289176941
+ ],
+ "seed_best_distance": [
+  0.19255371391773224,
+  0.5146711468696594,
+  0.8735781311988831
+ ]
+}

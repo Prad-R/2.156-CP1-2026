@@ -1,7 +1,9 @@
 """Merge the screening workers' checkpoints into one scored submission.
 
 Read-only on the checkpoints, so it is safe to run while workers are active.
-Writes results/<name>_submission.npy, results/<name>_summary.json and figures.
+Every merge is kept: results/<name>/<timestamp>/ holds submission.npy,
+summary.json, fronts.png and best_<k>.png (drawings of the best mechanisms for
+each target); results/<name>/latest/ is a copy of the newest merge.
 
     sbatch -J merge -c 4 --mem=8G -t 00:20:00 slurm/run.sbatch merge_screen.py
 """
@@ -9,6 +11,8 @@ import argparse
 import glob
 import json
 import os
+import shutil
+import time
 
 os.environ["JAX_PLATFORMS"] = "cpu"
 
@@ -20,6 +24,7 @@ import matplotlib.pyplot as plt
 from LINKS.CP import REFERENCE_POINTS, SCORE_NORMALIZERS, evaluate_submission
 from LINKS.Geometry import CurveEngine
 from LINKS.Kinematics import MechanismSolver
+from LINKS.Visualization import MechanismVisualizer
 from slurm import ckpt
 
 p = argparse.ArgumentParser()
@@ -30,7 +35,9 @@ args = p.parse_args()
 
 NAMES = ["Kangaroo 1", "Kangaroo 2", "Kangaroo 3"]
 MAX_PER_PROBLEM = 1000
-os.makedirs(args.out, exist_ok=True)
+STAMP = time.strftime("%Y%m%d-%H%M%S")
+OUT = f"{args.out}/{args.name}/{STAMP}"
+os.makedirs(OUT, exist_ok=True)
 targets = np.load("kangaroo_target_curves.npy")
 
 
@@ -58,10 +65,11 @@ for t in range(len(REFERENCE_POINTS)):
     fronts.append(F)
     submission[f"Problem {t + 1}"] = mechs
 
-np.save(f"{args.out}/{args.name}_submission.npy", submission)
+np.save(f"{OUT}/submission.npy", submission)
 score = evaluate_submission(submission)
 
 summary = {
+    "merged_at": STAMP,
     "workers": len(states),
     "worker_hours": round(sum(s["elapsed"] for s in states) / 3600, 2),
     "mechanisms_sampled": int(sum(s["n_mech"] for s in states)),
@@ -75,7 +83,7 @@ summary = {
                            if any(len(s["seeds"][t]["F"]) for s in states) else None
                            for t in range(len(REFERENCE_POINTS))],
 }
-with open(f"{args.out}/{args.name}_summary.json", "w") as f:
+with open(f"{OUT}/summary.json", "w") as f:
     json.dump(summary, f, indent=1)
 print(json.dumps(summary, indent=1))
 
@@ -93,16 +101,38 @@ for t, ax in enumerate(axs):
     ax.set_title(f"{NAMES[t]}: hypervolume {hv:.2f} (normalized {hv / SCORE_NORMALIZERS[t]:.2f})")
     ax.set_xlabel("Distance"); ax.set_ylabel("Material")
 fig.tight_layout()
-fig.savefig(f"{args.out}/{args.name}_fronts.png", dpi=130)
+fig.savefig(f"{OUT}/fronts.png", dpi=130)
 plt.close(fig)
 
+# ---- drawings: for each target, the most accurate, best-balanced and lightest designs
 solver = MechanismSolver(device="cpu")
 engine = CurveEngine(device="cpu")
+visualizer = MechanismVisualizer()
 for t in range(len(REFERENCE_POINTS)):
-    if not len(fronts[t]):
+    F, ref = fronts[t], REFERENCE_POINTS[t]
+    if not len(F):
         continue
-    m = submission[f"Problem {t + 1}"][int(np.argmin(fronts[t][:, 0]))]
-    traced = solver(m["x0"], m["edges"], m["fixed_joints"], m["motor"])[m["target_joint"]]
-    engine.visualize_comparison(traced, targets[t])
-    plt.gcf().savefig(f"{args.out}/{args.name}_best_fit_{t + 1}.png", dpi=130, bbox_inches="tight")
+    picks = [("Most accurate", int(np.argmin(F[:, 0]))),
+             ("Best balanced", int(np.argmax((ref[0] - F[:, 0]) * (ref[1] - F[:, 1])))),
+             ("Least material", int(np.argmin(F[:, 1])))]
+    merged = {}                                   # one row per distinct design
+    for label, i in picks:
+        merged[i] = f"{merged[i]} and {label.lower()}" if i in merged else label
+    picks = [(label, i) for i, label in merged.items()]
+    fig, axs = plt.subplots(len(picks), 2, figsize=(11, 5 * len(picks)), squeeze=False)
+    for row, (label, i) in enumerate(picks):
+        m = submission[f"Problem {t + 1}"][i]
+        visualizer(m["x0"], m["edges"], m["fixed_joints"], m["motor"], highlight=m["target_joint"], ax=axs[row, 0])
+        axs[row, 0].set_title(f"{label}: distance {F[i, 0]:.3f}, material {F[i, 1]:.2f}, {len(m['x0'])} joints")
+        traced = solver(m["x0"], m["edges"], m["fixed_joints"], m["motor"])[m["target_joint"]]
+        engine.visualize_single_comparison(traced, targets[t], ax=axs[row, 1])
+        axs[row, 1].set_title("Traced curve (orange) on target (blue)")
+    fig.suptitle(f"{NAMES[t]} — merge {STAMP}", fontsize=15)
+    fig.tight_layout()
+    fig.savefig(f"{OUT}/best_{t + 1}.png", dpi=120)
     plt.close("all")
+
+latest = f"{args.out}/{args.name}/latest"
+shutil.rmtree(latest, ignore_errors=True)
+shutil.copytree(OUT, latest)
+print(f"saved {OUT} (also copied to {latest})")

@@ -4,6 +4,12 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Every merge now saves drawings of the best mechanisms
+- `merge_screen.py` writes each merge to its own folder `results/screen/<timestamp>/` (nothing is overwritten) and mirrors the newest to `results/screen/latest/`.
+- New `best_1.png` to `best_3.png`: for each target, the most accurate, best-balanced and least-material designs, drawn as mechanisms next to their traced curve on the target.
+- Second merge (job 24967031, 16:23, 2.7 million mechanisms, 1.6 worker-hours): overall score **2.63**; hypervolume 4.26 / 6.16 / 16.65; normalized 2.13 / 4.11 / 1.66.
+- The flat `results/screen_*` files from the first merge are replaced by this layout.
+
 ### Mass screening: official score 2.61 — commit `0f6cab2` and this one
 - Added `screen.py`: samples random mechanisms, prunes each candidate joint's mechanism to the links that drive it, pre-filters by shape, then scores the best with the official metric at several sizes. Checkpoints atomically every minute; workers resume exactly where they stopped.
 - Added `merge_screen.py`: merges all workers into one scored submission and figures in `results/`.
