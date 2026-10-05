@@ -4,13 +4,13 @@ Class assignment (MIT 2.156, Fall 2026). Design planar linkages whose traced cur
 
 ## Standing instructions
 
-These apply to whoever is working in this repo, each on their own branch. The slide deck and the `gh` login noted below are Prad's.
+These apply to whoever is working in this repo, each on their own branch. The `gh` login noted below is Prad's; `slides/` is local to each checkout.
 
 - **Compute:** run everything as Slurm jobs on `mit_preemptable` only, preempt-safe and requeuable. Never run optimizations on the login node. Submit with `sbatch -J <name> slurm/run.sbatch <script.py> [args]`.
 - **Git:** each person works only on their own branch, and commits and pushes there after each change. Prad's is `prads-branch`; a teammate uses the branch they created. Check `git branch --show-current` and who you are working with before committing, and never touch someone else's branch. `main` stays identical to the course repo.
 - **Team:** two teammates work independently on separate branches; at the end they will pick one approach.
 - **`UPDATES.md`:** add an entry for every change made (newest first, dated, with commit hash and job IDs). It is the user's change log.
-- **Slide deck:** whenever there is a significant result, add slides to the results deck so the user can follow what is happening: https://claude.ai/artifact/TsoK36ZuYXQw6jXmsN7vHj (Slides artifact; read `project/deck.json` there before revising, append new result slides before the `status` slide and update `status`).
+- **Slide deck:** whenever there is a significant result, add slides so the user can follow what is happening. The deck is local and git-ignored (user's choice, 2026-10-05; an earlier claude.ai deck was dropped): edit `slides/build_deck.py` (append `slide(...)` calls before the final status slide, update the status slide) and rebuild with `~/.conda/envs/2.156_cp_1/bin/python slides/build_deck.py`, which writes the self-contained `slides/deck.html`.
 - **This file:** keep it current as context for future sessions.
 
 ## Environment
@@ -45,12 +45,22 @@ These apply to whoever is working in this repo, each on their own branch. The sl
 ## Code map
 
 - `LINKS/` — course library: `Optimization` (`Tools`, `DifferentiableTools`, `MechanismRandomizer`), `Kinematics.MechanismSolver`, `Geometry.CurveEngine`, `Visualization`, `CP` (limits, normalizers, scoring).
-- `advanced_starter.py` — script version of the advanced notebook (mixed-variable NSGA-II seeded from random mechanisms, then gradient descent on distance). Target chosen by `target_index` (default 1 = Kangaroo 2). Figures go to `outputs/advanced/`. Not checkpointed; runs in about 2 minutes.
+- `screen.py` — mass random sampling and screening for all three targets (Slurm array, one checkpoint per worker in `checkpoints/screen/worker_N.pkl`, readable summary in `worker_N.json`). Each checkpoint holds per-target Pareto `fronts` and the 2000 most accurate `seeds` (pruned mechanisms, already scaled). Uses its own skeleton generator: the course `MechanismRandomizer._skeleton_only` recurses without bound at higher ground probabilities.
+- `merge_screen.py` — merges worker checkpoints (read-only, safe while workers run) into `results/screen_submission.npy`, `results/screen_summary.json` and figures; scores with `evaluate_submission`.
+- `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
+
+## Things learned
+
+- Pruning a mechanism to the ancestors of the traced joint removes dead material; the traced joint becomes the last joint.
+- Distance is not scale-normalized, and uniform scaling of `x0` scales curve and material together, so scale is a free one-variable trade-off per mechanism.
+- JAX here runs in float32. `Tools` re-jits per batch size: pad batches to a fixed size.
+- Good designs so far are small (4 to 9 joints).
 
 ## Results so far
 
-- 2026-10-05 baseline (job 24959498, Kangaroo 2 only): plain GA found nothing feasible; seeded GA hypervolume 0.204; after gradient step 0.408. Scored submission 0.045 overall (built before the gradient step; Problems 1 and 3 empty).
+- 2026-10-05 baseline (job 24959498, Kangaroo 2 only): seeded GA hypervolume 0.204, after gradient step 0.408; scored submission 0.045 overall.
+- 2026-10-05 16:13 mass screening after about 1 worker-hour (workers 24964610, merge 24964619): official overall score 2.61; hypervolume 4.14 / 6.16 / 16.62, normalized 2.07 / 4.11 / 1.66; best distance 0.19 / 0.51 / 0.87. Workers budgeted 4 h each.
 
 ## Open questions
 
