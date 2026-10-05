@@ -4,6 +4,14 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Refinement round one finished: overall 3.43
+- Refinement (job array 24969336, 1,500 steps per target) finished at 17:29 for Kangaroos 2 and 3 and 17:56 for Kangaroo 1. Official score from `evaluate_submission`: **3.43** overall (screening alone: 2.75).
+  - Hypervolume 5.50 / 7.92 / 22.74; normalized 2.75 / 5.28 / 2.27.
+  - Best distance 0.067 / 0.30 / 0.48 (screening: 0.17 / 0.50 / 0.81). Kangaroo 3's most accurate design now follows both ears.
+- Growth stage (job array 24969663) started automatically at 17:56 on all three targets.
+- Added `report_best.py`: figures and a summary for the current best submission plus progress curves of the optimizing stages, written to `results/best/<timestamp>/` and mirrored to `results/best/latest/`. Reports are scheduled through 23:27.
+- Slide deck rebuilt (18 slides, HTML and PDF) with refinement results, progress curves, new fronts and best-mechanism drawings.
+
 ### Optimization stages added: gradient refinement and growth — commits `ef2cd00`, `3946b25`
 - Up to here every design was a random mechanism that was only pruned and resized. Two optimizing stages now follow the screen.
 - `refine.py`: Adam on joint positions for the most accurate seeds per joint count (5 to 9 and more), each at four material weights, minimizing distance + w x material. Running for all three targets as job array 24969336 (1,500 steps each).

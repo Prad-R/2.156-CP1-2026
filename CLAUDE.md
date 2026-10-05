@@ -51,6 +51,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `merge_screen.py` — merges worker checkpoints (read-only, safe while workers run) and scores with `evaluate_submission`. Each merge goes to `results/screen/<timestamp>/` (`submission.npy`, `summary.json`, `fronts.png`, `best_<k>.png` drawings of the best mechanisms per target); `results/screen/latest/` mirrors the newest. Commit each merge folder.
 - `refine.py` — gradient refinement (Adam, distance + w x material, four weights per seed) of screen seeds, one array task per target; checkpoint `checkpoints/refine/target_T.pkl` holds members (`mechs`, `last_good`), `front` (`F`, `x`, `src`). Publishes via `merge_and_publish`.
 - `grow.py` — growth stage: add one dyad (rigid / dyad / new-ground) to each parent, prune, resize, refine best children, select parents per joint-count bin. Starts from the refine checkpoint; own checkpoint in `checkpoints/grow/`. Publishes each generation.
+- `report_best.py` — figures and summary of the best submission and stage progress into `results/best/<timestamp>/` and `latest/`; the deck's optimization slides read `results/best/latest/`.
 - `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
@@ -73,6 +74,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - 2026-10-05 16:23 second merge (job 24967031, 2.7M mechanisms): overall 2.63; hypervolume 4.26 / 6.16 / 16.65. Gains from random screening are flattening.
 - 2026-10-05 16:35 merge (job 24967804): overall 2.68; hypervolume 4.48 / 6.18 / 16.70. Kangaroo 3 front includes three bare-crank (2-joint) designs; user has been told, no decision yet on keeping them.
 - 2026-10-05 ~16:55: refinement test (60 steps, Kangaroo 2) took overall to 2.86; one small growth generation on Kangaroo 3 took it to 2.93. Full refinement = job array 24969336; growth = 24969663 (starts after refinement). Deadline per user: about 1.5 days from 2026-10-05 afternoon.
+- 2026-10-05 17:56: refinement round one done, overall 3.43 (hypervolume 5.50 / 7.92 / 22.74; best distance 0.067 / 0.30 / 0.48). Growth (24969663) running. Pending: second refinement round including four-joint front designs; user decision on bare-crank designs.
 
 ## Open questions
 
