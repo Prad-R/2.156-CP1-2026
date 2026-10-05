@@ -2,11 +2,13 @@
 
 Class assignment (MIT 2.156, Fall 2026). Design planar linkages whose traced curve matches three kangaroo outlines while minimizing total link length. Course repo: `decode-mit/2.156-CP1-2026`.
 
-## Standing instructions from the user
+## Standing instructions
+
+These apply to whoever is working in this repo, each on their own branch. The slide deck and the `gh` login noted below are Prad's.
 
 - **Compute:** run everything as Slurm jobs on `mit_preemptable` only, preempt-safe and requeuable. Never run optimizations on the login node. Submit with `sbatch -J <name> slurm/run.sbatch <script.py> [args]`.
-- **Git:** make changes on `prads-branch` only, and commit and push there after each change (user said "commit and push" on 2026-10-05 when asked about a standing go-ahead). `main` stays identical to the course repo.
-- **Team:** the user's teammate will work on a separate branch of their own; at the end the two will pick one approach. Do not touch other branches.
+- **Git:** each person works only on their own branch, and commits and pushes there after each change. Prad's is `prads-branch`; a teammate uses the branch they created. Check `git branch --show-current` and who you are working with before committing, and never touch someone else's branch. `main` stays identical to the course repo.
+- **Team:** two teammates work independently on separate branches; at the end they will pick one approach.
 - **`UPDATES.md`:** add an entry for every change made (newest first, dated, with commit hash and job IDs). It is the user's change log.
 - **Slide deck:** whenever there is a significant result, add slides to the results deck so the user can follow what is happening: https://claude.ai/artifact/TsoK36ZuYXQw6jXmsN7vHj (Slides artifact; read `project/deck.json` there before revising, append new result slides before the `status` slide and update `status`).
 - **This file:** keep it current as context for future sessions.
