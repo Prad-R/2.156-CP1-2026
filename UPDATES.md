@@ -4,6 +4,16 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Optimization stages added: gradient refinement and growth — commits `ef2cd00`, `3946b25`
+- Up to here every design was a random mechanism that was only pruned and resized. Two optimizing stages now follow the screen.
+- `refine.py`: Adam on joint positions for the most accurate seeds per joint count (5 to 9 and more), each at four material weights, minimizing distance + w x material. Running for all three targets as job array 24969336 (1,500 steps each).
+  - 60-step test on Kangaroo 2: best distance 0.515 to 0.411, overall score 2.68 to 2.86.
+  - First test showed every design as broken: my bug (gradients on unused padding slots counted as failures), fixed before launch.
+- `grow.py`: adds one traced joint with two links to each good design, in many ways, keeps and refines the best children, and selects next parents per joint-count bin. Queued as job array 24969663 to start when refinement finishes (20 generations).
+  - One small test generation on Kangaroo 3: 42 children beat the best parent, best distance 0.805 to 0.768, overall score to 2.93.
+- `publish_best.py` gained `merge_and_publish` (pool new designs with the current best, re-score, publish if higher) and a lock so several jobs can publish at once. Both new stages publish automatically.
+- Known gap: the refinement seeds include no four-joint designs, which hold the low-material end of the fronts. A second round should include the front designs.
+
 ### Best submission is published to GitHub automatically
 - Added `publish_best.py`: keeps `submissions/best_submission.npy` as the best found so far, tracked per problem, with its score in `submissions/best_submission.json`. `merge_screen.py` calls it at the end of every merge; when any problem improves it re-scores, commits and pushes on its own.
 - Tested with merge job 24967804 (16:35): pushed from the compute node as commit `49e1e81`, overall score **2.68** (hypervolume 4.48 / 6.18 / 16.70).

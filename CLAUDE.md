@@ -49,6 +49,8 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `LINKS/` — course library: `Optimization` (`Tools`, `DifferentiableTools`, `MechanismRandomizer`), `Kinematics.MechanismSolver`, `Geometry.CurveEngine`, `Visualization`, `CP` (limits, normalizers, scoring).
 - `screen.py` — mass random sampling and screening for all three targets (Slurm array, one checkpoint per worker in `checkpoints/screen/worker_N.pkl`, readable summary in `worker_N.json`). Each checkpoint holds per-target Pareto `fronts` and the 2000 most accurate `seeds` (pruned mechanisms, already scaled). Uses its own skeleton generator: the course `MechanismRandomizer._skeleton_only` recurses without bound at higher ground probabilities.
 - `merge_screen.py` — merges worker checkpoints (read-only, safe while workers run) and scores with `evaluate_submission`. Each merge goes to `results/screen/<timestamp>/` (`submission.npy`, `summary.json`, `fronts.png`, `best_<k>.png` drawings of the best mechanisms per target); `results/screen/latest/` mirrors the newest. Commit each merge folder.
+- `refine.py` — gradient refinement (Adam, distance + w x material, four weights per seed) of screen seeds, one array task per target; checkpoint `checkpoints/refine/target_T.pkl` holds members (`mechs`, `last_good`), `front` (`F`, `x`, `src`). Publishes via `merge_and_publish`.
+- `grow.py` — growth stage: add one dyad (rigid / dyad / new-ground) to each parent, prune, resize, refine best children, select parents per joint-count bin. Starts from the refine checkpoint; own checkpoint in `checkpoints/grow/`. Publishes each generation.
 - `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
@@ -60,12 +62,17 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - JAX here runs in float32. `Tools` re-jits per batch size: pad batches to a fixed size.
 - Good designs so far are small (4 to 9 joints).
 
+- Gradients on padding joints are nan by construction (zero-length links); mask them before testing a member for failure.
+- The solver never solves a moving joint at index 2 (it assumes a second ground there); such designs come back constant and score as invalid.
+- The screen's seed pool has no four-joint designs (they are less accurate), yet four-joint designs hold the low-material end of the fronts: include front designs in any later refinement round.
+
 ## Results so far
 
 - 2026-10-05 baseline (job 24959498, Kangaroo 2 only): seeded GA hypervolume 0.204, after gradient step 0.408; scored submission 0.045 overall.
 - 2026-10-05 16:13 mass screening after about 1 worker-hour (workers 24964610, merge 24964619): official overall score 2.61; hypervolume 4.14 / 6.16 / 16.62, normalized 2.07 / 4.11 / 1.66; best distance 0.19 / 0.51 / 0.87. Workers budgeted 4 h each.
 - 2026-10-05 16:23 second merge (job 24967031, 2.7M mechanisms): overall 2.63; hypervolume 4.26 / 6.16 / 16.65. Gains from random screening are flattening.
 - 2026-10-05 16:35 merge (job 24967804): overall 2.68; hypervolume 4.48 / 6.18 / 16.70. Kangaroo 3 front includes three bare-crank (2-joint) designs; user has been told, no decision yet on keeping them.
+- 2026-10-05 ~16:55: refinement test (60 steps, Kangaroo 2) took overall to 2.86; one small growth generation on Kangaroo 3 took it to 2.93. Full refinement = job array 24969336; growth = 24969663 (starts after refinement). Deadline per user: about 1.5 days from 2026-10-05 afternoon.
 
 ## Open questions
 
