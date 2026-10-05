@@ -1,30 +1,30 @@
 {
  "hypervolume": {
   "Problem 1": 4.484546849696184,
-  "Problem 2": 6.179068737214199,
+  "Problem 2": 7.010117803984642,
   "Problem 3": 16.69633592515019
  },
  "source": {
   "Problem 1": "screen merge 20261005-163531",
-  "Problem 2": "screen merge 20261005-163531",
+  "Problem 2": "refine target 2, step 60",
   "Problem 3": "screen merge 20261005-163531"
  },
  "score": {
-  "Overall Score": 2.6770953918353033,
+  "Overall Score": 2.8617729622287347,
   "Score Breakdown": {
    "Problem 1": 4.484546849696184,
-   "Problem 2": 6.179068737214199,
+   "Problem 2": 7.010117803984642,
    "Problem 3": 16.69633592515019
   },
   "Normalized Score Breakdown": {
    "Problem 1": 2.242273424848092,
-   "Problem 2": 4.1193791581428,
+   "Problem 2": 4.673411869323094,
    "Problem 3": 1.669633592515019
   }
  },
  "designs": {
   "Problem 1": 22,
-  "Problem 2": 31,
+  "Problem 2": 139,
   "Problem 3": 45
  }
 }
