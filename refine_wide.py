@@ -10,8 +10,9 @@ candidates and spends steps where they pay off:
            plus the small designs from the cheap end of the fronts at
            heavier material weights
 
-Candidates: all screening seeds, the screening fronts, and round one's final
-designs. Every in-limits step is offered to the front, and the front is
+Candidates: all screening seeds, the screening fronts, round one's final
+designs, the growth stage's designs, and the other targets' most accurate
+designs (the three targets are versions of one shape, so they transfer). Every in-limits step is offered to the front, and the front is
 published as it goes.
 
     sbatch -J wide --array=0-2 -c 8 --mem=32G -t 12:00:00 \
@@ -145,6 +146,15 @@ def gather_candidates():
     if r1:                                               # round one's cheap end, too
         for F, x, src in zip(r1["front"]["F"], r1["front"]["x"], r1["front"]["src"]):
             cheap.append((F[1], with_x(r1["mechs"][src], x)))
+    for t in range(len(REFERENCE_POINTS)):               # growth results; other targets' best are useful starts too
+        g = ckpt.load(f"checkpoints/grow/target_{t}.pkl")
+        if not g:
+            continue
+        order = np.argsort(g["front"]["F"][:, 0])[: 300 if t == TGT else 100]
+        first += [g["front"]["mechs"][i] for i in order]
+        first += [m for m, F in zip(g["parents"], g["parents_F"]) if F[1] < REF[1]]
+        if t == TGT:
+            cheap += [(F[1], m) for F, m in zip(g["front"]["F"], g["front"]["mechs"])]
     ok = [i for i, m in enumerate(seeds) if len(m["x0"]) >= 4]
     seeds, seed_d = [seeds[i] for i in ok], np.array(seed_d)[ok]
     take = pick_per_size(seeds, seed_d, max(0, args.n0 - len(first)))

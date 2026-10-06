@@ -46,6 +46,13 @@ summary = {
     "designs": [len(F) for F in fronts],
     "best_distance": [float(F[:, 0].min()) if len(F) else None for F in fronts],
     "least_material": [float(F[:, 1].min()) if len(F) else None for F in fronts],
+    # unclaimed area, as overall-score points: left of the most accurate design (needs better accuracy)
+    # and under the front (needs the same accuracy with less material)
+    "unclaimed_left_of_front": [float(F[:, 0].min() * REFERENCE_POINTS[t][1] / SCORE_NORMALIZERS[t] / 3) if len(F) else None
+                                for t, F in enumerate(fronts)],
+    "unclaimed_under_front": [float((REFERENCE_POINTS[t][0] * REFERENCE_POINTS[t][1] - score["Score Breakdown"][k]
+                                     - F[:, 0].min() * REFERENCE_POINTS[t][1]) / SCORE_NORMALIZERS[t] / 3) if len(F) else None
+                              for t, (k, F) in enumerate(zip(publish_best.PROBLEMS, fronts))],
     "joint_counts": [dict(sorted(Counter(len(m["x0"]) for m in submission[k]).items())) for k in publish_best.PROBLEMS],
 }
 with open(f"{OUT}/summary.json", "w") as f:

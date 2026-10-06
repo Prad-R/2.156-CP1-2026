@@ -53,6 +53,7 @@ p.add_argument("--per-parent", type=int, default=16)
 p.add_argument("--steps", type=int, default=250)
 p.add_argument("--lr", type=float, default=0.004)
 p.add_argument("--refine-dir", default="checkpoints/refine")
+p.add_argument("--also-from", nargs="*", default=[], help="other checkpoint dirs to start from (wide, grow)")
 p.add_argument("--out", default="checkpoints/grow")
 args = p.parse_args()
 
@@ -159,7 +160,7 @@ def make(x0, edges, fixed):
             "motor": np.array([0, 1]), "target_joint": len(keep) - 1}
 
 
-def propose(parent, rng):
+def propose(parent, rng, parent_material=0.0):
     """One child: the parent plus one new traced joint hung from two joints."""
     x0, edges, fixed = parent["x0"], parent["edges"], parent["fixed_joints"]
     n = len(x0)
@@ -172,6 +173,8 @@ def propose(parent, rng):
     size = np.sqrt(((x0 - x0.mean(0)) ** 2).sum(-1).mean())
     lo, hi = x0.min(0) - 0.6 * size, x0.max(0) + 0.6 * size
     kind = rng.choice(["rigid", "dyad", "ground"], p=[0.3, 0.45, 0.25])
+    if parent_material > 0.8 * REF[1]:                   # little material left: only short, local additions
+        kind = "rigid"
 
     if kind == "rigid" and n > 2:
         par = edges.min(1)[edges.max(1) == a]
@@ -228,6 +231,7 @@ def select_parents(mechs, F):
     """Most accurate designs per joint-count bin, round-robin until the quota is filled."""
     sizes = np.array([len(m["x0"]) for m in mechs])
     bins = np.searchsorted(SIZE_BINS, sizes)
+    bins[F[:, 1] >= 0.97 * REF[1]] = -1                  # over the material limit: never a parent
     ranked = [list(np.where(bins == b)[0][np.argsort(F[bins == b, 0])]) for b in range(len(SIZE_BINS) + 1)]
     chosen = []
     while len(chosen) < args.parents and any(ranked):
@@ -244,11 +248,21 @@ def with_x(m, x):
 # ---------------------------------------------------------------- state
 state = ckpt.load(CKPT)
 if state is None:
-    src = ckpt.load(f"{args.refine_dir}/target_{TGT}.pkl")
-    if src is None:
-        raise SystemExit(f"no refinement checkpoint for target {TGT} in {args.refine_dir}")
-    pool = [with_x(src["mechs"][s], x) for x, s in zip(src["front"]["x"], src["front"]["src"])]
-    pool += [with_x(m, x) for m, x in zip(src["mechs"], src["last_good"])]
+    pool = []
+    src = ckpt.load(f"{args.refine_dir}/target_{TGT}.pkl")           # round-one refinement
+    if src:
+        pool += [with_x(src["mechs"][s], x) for x, s in zip(src["front"]["x"], src["front"]["src"])]
+        pool += [with_x(m, x) for m, x in zip(src["mechs"], src["last_good"])]
+    for d in args.also_from:                                         # wide refinement and earlier growth runs
+        src = ckpt.load(f"{d}/target_{TGT}.pkl")
+        if not src:
+            continue
+        pool += src["front"]["mechs"]
+        pool += src.get("parents", [])
+        if "run" in src:
+            pool += [with_x(m, x) for m, x in zip(src["run"]["mechs"], src["run"]["last_good"])]
+    if not pool:
+        raise SystemExit(f"no earlier results for target {TGT}")
     pool = [m for m in pool if len(m["x0"]) >= 4]
     F = official(pool)
     ok = np.isfinite(F).all(1)
@@ -283,7 +297,7 @@ while state["gen"] < args.gens and not stop["flag"]:
         kids, owner = [], []
         for pi, par in enumerate(state["parents"]):
             for _ in range(args.children):
-                k = propose(par, rng)
+                k = propose(par, rng, state["parents_F"][pi, 1])
                 if k is not None and len(k["x0"]) >= 4:
                     kids.append(k)
                     owner.append(pi)
@@ -293,7 +307,7 @@ while state["gen"] < args.gens and not stop["flag"]:
         kids = [with_x(kids[i], kids[i]["x0"] * (S_TARGET / radius[i])) for i in alive]   # resize to the target
         owner = owner[alive]
         F = official(kids)
-        ok = np.isfinite(F).all(1)
+        ok = np.isfinite(F).all(1) & (F[:, 1] < REF[1])
         order = [i for i in np.argsort(np.where(ok, F[:, 0], np.inf)) if ok[i]]
         taken, count = [], np.zeros(len(state["parents"]), dtype=int)
         for i in order:                                   # best first, a few per parent
@@ -337,7 +351,9 @@ while state["gen"] < args.gens and not stop["flag"]:
         x_before = r["x"].copy()
         for c in range(0, N, CHUNK):
             sl = slice(c, c + CHUNK)
-            d, m, g = value_and_grad(r["x"][sl], r["A"][sl], r["types"][sl], r["tidx"][sl], r["w"][sl])
+            near_limit = r["last_F"][sl, 1] > 0.9 * REF[1]   # push back from the material limit (inf = not yet scored)
+            w_now = r["w"][sl] + np.where(near_limit & np.isfinite(r["last_F"][sl, 1]), 1.0, 0.0)
+            d, m, g = value_and_grad(r["x"][sl], r["A"][sl], r["types"][sl], r["tidx"][sl], w_now)
             d, m, g = np.array(d), np.array(m), np.array(g, dtype=np.float64)
             g[~r["real"][sl]] = 0.0
             ok = np.isfinite(d) & np.isfinite(g).all(axis=(1, 2))
