@@ -2,24 +2,24 @@
  "hypervolume": {
   "Problem 1": 5.841097236720785,
   "Problem 2": 8.4924444331272,
-  "Problem 3": 24.26266479911479
+  "Problem 3": 24.31448787872511
  },
  "source": {
   "Problem 1": "wide refine target 1, stage 2 step 1162",
   "Problem 2": "wide refine target 2, stage 2 step 1104",
-  "Problem 3": "wide refine target 3, stage 2 step 583"
+  "Problem 3": "wide refine target 3, stage 2 step 985"
  },
  "score": {
-  "Overall Score": 3.6694815734522237,
+  "Overall Score": 3.6712090094392344,
   "Score Breakdown": {
    "Problem 1": 5.841097236720785,
    "Problem 2": 8.4924444331272,
-   "Problem 3": 24.26266479911479
+   "Problem 3": 24.31448787872511
   },
   "Normalized Score Breakdown": {
    "Problem 1": 2.9205486183603924,
    "Problem 2": 5.6616296220848,
-   "Problem 3": 2.426266479911479
+   "Problem 3": 2.431448787872511
   }
  },
  "designs": {
