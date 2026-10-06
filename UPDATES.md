@@ -4,6 +4,17 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Growth round one finished (overall 3.50); wide refinement and growth round two queued
+- Growth (job array 24969663, 20 generations per target) finished between 19:21 and 20:33. Official score **3.50** overall; hypervolume 5.52 / 8.16 / 23.07. Best distance 0.054 / 0.22 / 0.46 (before growth: 0.067 / 0.30 / 0.48). The last generation found no improving children on any target.
+- Flaw found: growth chose parents on distance alone, so some drifted over the material limit (Kangaroo 1 reached distance 0.040 with 20 joints, outside the limit, so it does not count). Fixed in `grow.py`: parents must be inside the limit and designs near it are pushed back.
+- Added `refine_wide.py` (commits `a17f205`, `705a92e`): starts from about 4,000 candidates per target (all screening seeds and fronts, round one's designs, growth's designs, and the other targets' best), keeps the best per joint count after each stage, and gives finalists a long run at several material weights. Queued as job array 24993928.
+- Growth round two (job array 24993929) is chained to start from the wide round's results.
+- `report_best.py` now also reports where the unclaimed score is.
+- Screening workers finished their 4-hour budgets at about 20:00.
+- User decision: keep the bare-crank designs in the submission.
+- Git: timestamped result folders and the publish lock are git-ignored; only `results/*/latest` and `submissions/` are tracked.
+- The cluster queue slowed in the evening: short jobs waited 30 minutes or more, so the wide round was launched without its test run.
+
 ### Refinement round one finished: overall 3.43
 - Refinement (job array 24969336, 1,500 steps per target) finished at 17:29 for Kangaroos 2 and 3 and 17:56 for Kangaroo 1. Official score from `evaluate_submission`: **3.43** overall (screening alone: 2.75).
   - Hypervolume 5.50 / 7.92 / 22.74; normalized 2.75 / 5.28 / 2.27.

@@ -52,6 +52,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `refine.py` — gradient refinement (Adam, distance + w x material, four weights per seed) of screen seeds, one array task per target; checkpoint `checkpoints/refine/target_T.pkl` holds members (`mechs`, `last_good`), `front` (`F`, `x`, `src`). Publishes via `merge_and_publish`.
 - `grow.py` — growth stage: add one dyad (rigid / dyad / new-ground) to each parent, prune, resize, refine best children, select parents per joint-count bin. Starts from the refine checkpoint; own checkpoint in `checkpoints/grow/`. Publishes each generation.
 - `report_best.py` — figures and summary of the best submission and stage progress into `results/best/<timestamp>/` and `latest/`; the deck's optimization slides read `results/best/latest/`.
+- `refine_wide.py` — successive-halving refinement from about 4,000 candidates per target (screen seeds and fronts, round one, growth, other targets' best); checkpoint `checkpoints/wide/target_T.pkl` (`run` = current stage arrays, `front` with `mechs`).
 - `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
@@ -74,7 +75,9 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - 2026-10-05 16:23 second merge (job 24967031, 2.7M mechanisms): overall 2.63; hypervolume 4.26 / 6.16 / 16.65. Gains from random screening are flattening.
 - 2026-10-05 16:35 merge (job 24967804): overall 2.68; hypervolume 4.48 / 6.18 / 16.70. Kangaroo 3 front includes three bare-crank (2-joint) designs; user has been told, no decision yet on keeping them.
 - 2026-10-05 ~16:55: refinement test (60 steps, Kangaroo 2) took overall to 2.86; one small growth generation on Kangaroo 3 took it to 2.93. Full refinement = job array 24969336; growth = 24969663 (starts after refinement). Deadline per user: about 1.5 days from 2026-10-05 afternoon.
-- 2026-10-05 17:56: refinement round one done, overall 3.43 (hypervolume 5.50 / 7.92 / 22.74; best distance 0.067 / 0.30 / 0.48). Growth (24969663) running. Pending: second refinement round including four-joint front designs; user decision on bare-crank designs.
+- 2026-10-05 17:56: refinement round one done, overall 3.43 (hypervolume 5.50 / 7.92 / 22.74; best distance 0.067 / 0.30 / 0.48). Growth (24969663) running. 
+- 2026-10-05 20:33: growth round one done, overall 3.50 (hypervolume 5.52 / 8.16 / 23.07; best distance 0.054 / 0.22 / 0.46). Wide refinement = job array 24993928 (`checkpoints/wide`), growth round two = 24993929 (`checkpoints/grow2`, starts after wide). User decided to keep bare-crank designs. User finds Kangaroo 2 corners and Kangaroo 3 tail/limbs not caught; told that the metric matches by arc-length position so partial features earn little.
+- Queue note: in the evening short jobs waited 30+ minutes (reason Priority); do not rely on quick test jobs then.
 
 ## Open questions
 
