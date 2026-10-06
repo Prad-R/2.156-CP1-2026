@@ -1,24 +1,24 @@
 {
  "hypervolume": {
   "Problem 1": 5.8413362183500634,
-  "Problem 2": 8.496677432198856,
+  "Problem 2": 8.510758943434972,
   "Problem 3": 24.387399500403486
  },
  "source": {
   "Problem 1": "grow target 1, generation 1",
-  "Problem 2": "reshape target 2, step 566",
+  "Problem 2": "grow target 2, generation 1",
   "Problem 3": "reshape target 3, step 584"
  },
  "score": {
-  "Overall Score": 3.6746198935604286,
+  "Overall Score": 3.6777491182795647,
   "Score Breakdown": {
    "Problem 1": 5.8413362183500634,
-   "Problem 2": 8.496677432198856,
+   "Problem 2": 8.510758943434972,
    "Problem 3": 24.387399500403486
   },
   "Normalized Score Breakdown": {
    "Problem 1": 2.9206681091750317,
-   "Problem 2": 5.664451621465904,
+   "Problem 2": 5.673839295623314,
    "Problem 3": 2.4387399500403486
   }
  },
