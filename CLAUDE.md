@@ -54,6 +54,9 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `grow.py` — growth stage: add one dyad (rigid / dyad / new-ground) to each parent, prune, resize, refine best children, select parents per joint-count bin. Starts from the refine checkpoint; own checkpoint in `checkpoints/grow/`. Publishes each generation.
 - `report_best.py` — figures and summary of the best submission and stage progress into `results/best/<timestamp>/` and `latest/`; the deck's optimization slides read `results/best/latest/`.
 - `refine_wide.py` — successive-halving refinement from about 4,000 candidates per target (screen seeds and fronts, round one, growth, other targets' best); checkpoint `checkpoints/wide/target_T.pkl` (`run` = current stage arrays, `front` with `mechs`).
+- `linkcore.py` — shared packing, kernels (`score`, `align`, `value_and_grad`, `traced_radius`), front helpers, parent pickers and the batched Adam update; newer scripts import it.
+- `diagnose.py` — per-point error along each target for the best designs; figures in `results/diagnose/latest/`.
+- `flip.py`, `reshape.py`, `polish.py` — experiments that all came back negative (see Things learned); kept for the record.
 - `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
@@ -68,6 +71,10 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - Gradients on padding joints are nan by construction (zero-length links); mask them before testing a member for failure.
 - The solver never solves a moving joint at index 2 (it assumes a second ground there); such designs come back constant and score as invalid.
 - The screen's seed pool has no four-joint designs (they are less accurate), yet four-joint designs hold the low-material end of the fronts: include front designs in any later refinement round.
+- Moving joint positions is exhausted (2026-10-06): wide restarts from about 4,000 designs, assembly-branch flips, chamfer-then-official and blurred-target losses, and strictly-improving polish all left best distances unchanged (about 0.052 / 0.22 / 0.45). Only structural change (growth) still lowers distance. Do not retry these without a new idea.
+- Restarting Adam at lr 0.004 x size on converged designs usually leaves them worse; harvest the best point along the way, never the final state.
+- Per-point error: Kangaroo 3 loses most on the tail (55 to 65% of perimeter); Kangaroo 2's best has four similar peaks; cheap Kangaroo 2 designs miss the snout-to-feet concavity.
+- Score value is distance gain times material headroom, so accuracy gains on cheap designs are worth more than at the material-heavy tip of the front.
 
 ## Results so far
 
@@ -79,6 +86,8 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - 2026-10-05 17:56: refinement round one done, overall 3.43 (hypervolume 5.50 / 7.92 / 22.74; best distance 0.067 / 0.30 / 0.48). Growth (24969663) running. 
 - 2026-10-05 20:33: growth round one done, overall 3.50 (hypervolume 5.52 / 8.16 / 23.07; best distance 0.054 / 0.22 / 0.46). Wide refinement = job array 24993928 (`checkpoints/wide`), growth round two = 24993929 (`checkpoints/grow2`, starts after wide). User decided to keep bare-crank designs. User finds Kangaroo 2 corners and Kangaroo 3 tail/limbs not caught; told that the metric matches by arc-length position so partial features earn little.
 - Queue note: in the evening short jobs waited 30+ minutes (reason Priority); do not rely on quick test jobs then.
+- 2026-10-06 00:21: overall 3.69 (hypervolume 5.87 / 8.52 / 24.54). Growth round two (24994402, `checkpoints/grow2`) still running. Slides rebuilt at this point (22 slides).
+- Slides: user asked (2026-10-05) for the deck to be rebuilt whenever there are new results, without being asked.
 
 ## Open questions
 

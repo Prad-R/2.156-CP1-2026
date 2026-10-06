@@ -2,6 +2,20 @@
 
 A running log of what has changed in this repo and why, newest first. Results worth understanding also go into the slide deck.
 
+## 2026-10-06
+
+### Four attempts to lower distance by moving joints; one useful diagnostic
+- Score at 00:21: **3.69** overall (hypervolume 5.87 / 8.52 / 24.54; best distance 0.052 / 0.22 / 0.45). Recent gains are from the wide refinement (cheaper designs at the same accuracy) and growth round two.
+- Wide refinement (job array 24994401, about 4,000 starts per target) finished 23:07 to 23:39. It raised the score from 3.50 to 3.67 without improving any best distance.
+- `diagnose.py` (commit `c5b543b`): error along each target, point by point. Kangaroo 3 loses most on the tail (55 to 65% of the perimeter; worst fifth carries 48% of the distance), ears are caught. Kangaroo 2's best design has four similar peaks (snout tip, feet, lower-right corner, just before the snout); cheap six-joint designs miss the snout-to-feet concavity. Figures in `results/diagnose/latest/`.
+- `flip.py` (branch flips, job array 25001831): about 7,000 flips tried, best refined for 400 steps. Negative: hypervolume +0.012 / +0.001 / +0.001.
+- `reshape.py` (forgiving losses, job array 25001832): control vs chamfer-then-official vs blurred-target, same parents. Negative: control matched or beat both on every target (Kangaroo 3 arm hypervolumes 24.36 / 24.27 / 24.19).
+  - Side finding: in all arms the designs usually ended worse than they started; restarting Adam on finished designs knocks them out of narrow minima.
+- `polish.py` (strictly-improving projected steps, job array 25006244, commit `5d7431d`): negative: hypervolume +0.0007 / +0.0005 / +0.0012. The front designs are at true minima for their link layout.
+- Conclusion: moving joint positions is exhausted; only structural change (growth) still lowers distance. Growth round two (job array 24994402) is running: best distance 0.444 on Kangaroo 3 at generation 9.
+- `linkcore.py` added: shared packing, front, Adam and alignment code for the newer scripts.
+- Slides rebuilt (22 slides, HTML and PDF) with all of the above.
+
 ## 2026-10-05
 
 ### Jobs may now also run on mit_normal
