@@ -192,3 +192,8 @@ logs/
 checkpoints/
 outputs/
 slides/
+
+# per-run result snapshots stay on disk; only results/*/latest is tracked
+results/*/2*/
+submissions/.lock
+*.tmp.npy

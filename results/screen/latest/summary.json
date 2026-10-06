@@ -1,41 +1,41 @@
 {
- "merged_at": "20261005-173735",
+ "merged_at": "20261005-193756",
  "workers": 4,
- "worker_hours": 6.47,
- "mechanisms_sampled": 10110976,
- "curves_screened": 44417372,
- "official_evaluations": 10663677,
+ "worker_hours": 14.48,
+ "mechanisms_sampled": 20914176,
+ "curves_screened": 91848210,
+ "official_evaluations": 22057479,
  "score": {
-  "Overall Score": 2.753298671628826,
+  "Overall Score": 2.7789224978442895,
   "Score Breakdown": {
-   "Problem 1": 4.588443205993229,
-   "Problem 2": 6.299962899289611,
-   "Problem 3": 17.65699145696789
+   "Problem 1": 4.66767920609081,
+   "Problem 2": 6.311357588496627,
+   "Problem 3": 17.95356164823046
   },
   "Normalized Score Breakdown": {
-   "Problem 1": 2.2942216029966147,
-   "Problem 2": 4.199975266193074,
-   "Problem 3": 1.765699145696789
+   "Problem 1": 2.333839603045405,
+   "Problem 2": 4.207571725664418,
+   "Problem 3": 1.7953561648230458
   }
  },
  "front_size": [
-  22,
-  32,
-  38
+  29,
+  43,
+  52
  ],
  "best_distance": [
   0.17139722406864166,
   0.501152753829956,
-  0.8145739436149597
+  0.7985481023788452
  ],
  "least_material": [
   0.8130620718002319,
-  0.664537787437439,
+  0.6546580791473389,
   0.2676951289176941
  ],
  "seed_best_distance": [
   0.17139722406864166,
   0.501152753829956,
-  0.8145739436149597
+  0.7985481023788452
  ]
 }

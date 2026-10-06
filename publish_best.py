@@ -52,15 +52,18 @@ def push():
     return code == 0
 
 
-def publish(submission, score, source):
-    """Fold `submission` into the best file wherever it scores higher; push if changed."""
+def publish(submission, score, source, only=None):
+    """Fold `submission` into the best file wherever it scores higher; push if changed.
+
+    `only` limits the comparison to the listed problems (the rest are left alone).
+    """
     os.makedirs(DIR, exist_ok=True)
     with open(f"{DIR}/.lock", "w") as lock:          # several jobs may publish at once
         fcntl.flock(lock, fcntl.LOCK_EX)
-        return _publish(submission, score, source)
+        return _publish(submission, score, source, only or PROBLEMS)
 
 
-def _publish(submission, score, source):
+def _publish(submission, score, source, only):
     if os.path.exists(NPY) and os.path.exists(META):
         best = np.load(NPY, allow_pickle=True).item()
         with open(META) as f:
@@ -70,7 +73,7 @@ def _publish(submission, score, source):
         meta = {"hypervolume": {k: 0.0 for k in PROBLEMS}, "source": {k: None for k in PROBLEMS}}
 
     improved = []
-    for k in PROBLEMS:
+    for k in only:
         hv = score["Score Breakdown"][k]
         if hv > meta["hypervolume"][k] + 1e-9:
             best[k] = submission[k]
@@ -140,4 +143,4 @@ def merge_and_publish(new, source, max_designs=1000):
         if len(idx) > max_designs:
             idx = idx[np.linspace(0, len(idx) - 1, max_designs).round().astype(int)]
         submission[k] = [pool[i] for i in idx]
-    return publish(submission, evaluate_submission(submission), source)
+    return publish(submission, evaluate_submission(submission), source, only=list(new))
