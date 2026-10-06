@@ -4,6 +4,14 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-06
 
+### Submission checks, code package, and the bare crank
+- Added `verify_submission.py`: scores the submission file from a clean copy of the course repo in a fresh process. Result matched the recorded score exactly (3.691214), no scorer warnings.
+- The submission website states "4 to 20 joints in each mechanism". Problem 3 holds one two-joint design (the bare crank). A command to remove it was interrupted by the user but had already run and pushed (commit `950bccc`, score 3.6911). On the user's instruction the crank was restored by reverting that commit; the file again has 1,000 / 1,000 / 1,000 designs and scores 3.6912. The enforcement edits to `publish_best.py` and `screen.py` were discarded.
+  - Open risk, accepted by the user: the form may reject or ignore that one design. Without it Problem 3's hypervolume is 24.599 instead of 24.604.
+- Added `CODE.md` (what each code file is and its role) and `2.156_CP1_code.zip` (the code, the course library it needs, and the submission file) for the assignment hand-in.
+- Growth round two (job array 24994402) finished; final score 3.69 overall.
+
+
 ### Four attempts to lower distance by moving joints; one useful diagnostic
 - Score at 00:21: **3.69** overall (hypervolume 5.87 / 8.52 / 24.54; best distance 0.052 / 0.22 / 0.45). Recent gains are from the wide refinement (cheaper designs at the same accuracy) and growth round two.
 - Wide refinement (job array 24994401, about 4,000 starts per target) finished 23:07 to 23:39. It raised the score from 3.50 to 3.67 without improving any best distance.

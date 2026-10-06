@@ -88,6 +88,10 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - Queue note: in the evening short jobs waited 30+ minutes (reason Priority); do not rely on quick test jobs then.
 - 2026-10-06 00:21: overall 3.69 (hypervolume 5.87 / 8.52 / 24.54). Growth round two (24994402, `checkpoints/grow2`) still running. Slides rebuilt at this point (22 slides).
 - Slides: user asked (2026-10-05) for the deck to be rebuilt whenever there are new results, without being asked.
+- 2026-10-06 afternoon: all stages finished, nothing running. Final score 3.6912 (hypervolume 5.865 / 8.521 / 24.604), verified from clean course code with `verify_submission.py`.
+- Bare crank: the submission website says 4 to 20 joints per mechanism; Problem 3 has one 2-joint design. The user was told and chose to keep it ("restore the crank", 2026-10-06). Do not remove it or add joint-count enforcement unless the user asks.
+- Hand-in: `CODE.md` and `2.156_CP1_code.zip` (rebuild command at the bottom of `CODE.md`; rebuild after any code or submission change).
+- An interrupted Bash command may already have run most of its steps, including jobs that push: check the actual state before reporting it as not run.
 
 ## Open questions
 
