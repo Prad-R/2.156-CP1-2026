@@ -6,7 +6,7 @@ Class assignment (MIT 2.156, Fall 2026). Design planar linkages whose traced cur
 
 These apply to whoever is working in this repo, each on their own branch. The `gh` login noted below is Prad's; `slides/` is local to each checkout.
 
-- **Compute:** run everything as Slurm jobs on `mit_preemptable` only, preempt-safe and requeuable. Never run optimizations on the login node. Submit with `sbatch -J <name> slurm/run.sbatch <script.py> [args]`.
+- **Compute:** run everything as Slurm jobs, preempt-safe, checkpointed and requeuable; never run optimizations on the login node. Prefer `mit_preemptable`; when its queue is backed up, `mit_normal` or `mit_normal_gpu` may be used as well (user, 2026-10-05), under the same preempt-safe rules. Submit with `sbatch -p mit_preemptable,mit_normal -J <name> slurm/run.sbatch <script.py> [args]` so Slurm picks whichever starts first; never submit duplicates of a job, they would share a checkpoint.
 - **Git:** each person works only on their own branch, and commits and pushes there after each change. Prad's is `prads-branch`; a teammate uses the branch they created. Check `git branch --show-current` and who you are working with before committing, and never touch someone else's branch. `main` stays identical to the course repo.
 - **Team:** two teammates work independently on separate branches; at the end they will pick one approach.
 - **`UPDATES.md`:** add an entry for every change made (newest first, dated, with commit hash and job IDs). It is the user's change log.
@@ -26,7 +26,8 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 
 - `mit_preemptable` has `GraceTime=0` and `PreemptMode=REQUEUE`: a preempted job is killed with no signal and requeued. Scripts must checkpoint periodically (`slurm/ckpt.py`: `save`, `load`, `Every`) and resume on start. A signal handler alone is not enough.
 - `slurm/run.sbatch` defaults: 4 CPUs, 8 GB, 4 h; override on the `sbatch` command line. Logs append to `logs/<name>-<jobid>.out`. It requeues itself 120 s before the time limit.
-- CPU-only jobs are accepted; max walltime is 2 days.
+- CPU-only jobs are accepted; max walltime is 2 days on `mit_preemptable`, 12 h on `mit_normal` (96 CPUs per user), 6 h on `mit_normal_gpu`.
+- The batch script is copied at submit time: after editing `slurm/run.sbatch`, pending jobs must be cancelled and resubmitted.
 - `logs/`, `checkpoints/`, `outputs/` are git-ignored.
 
 ## The problem

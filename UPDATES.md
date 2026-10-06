@@ -4,6 +4,11 @@ A running log of what has changed in this repo and why, newest first. Results wo
 
 ## 2026-10-05
 
+### Jobs may now also run on mit_normal
+- The preemptable queue backed up in the evening (about 1,170 jobs pending on priority; my jobs waited 30 to 60 minutes without starting). On the user's instruction, `slurm/run.sbatch` now also accepts `mit_normal` and `mit_normal_gpu`, and jobs are submitted with `-p mit_preemptable,mit_normal` so they start on whichever is free first. Same checkpoint and requeue rules everywhere.
+- Resubmitted that way: wide refinement (24994401), growth round two (24994402, chained), report (24994403). The earlier queued copies were cancelled.
+- `results/` is no longer tracked in git (commit `ea8556b`); figures and summaries stay on the cluster. Only `submissions/` holds generated files in the repo.
+
 ### Growth round one finished (overall 3.50); wide refinement and growth round two queued
 - Growth (job array 24969663, 20 generations per target) finished between 19:21 and 20:33. Official score **3.50** overall; hypervolume 5.52 / 8.16 / 23.07. Best distance 0.054 / 0.22 / 0.46 (before growth: 0.067 / 0.30 / 0.48). The last generation found no improving children on any target.
 - Flaw found: growth chose parents on distance alone, so some drifted over the material limit (Kangaroo 1 reached distance 0.040 with 20 joints, outside the limit, so it does not count). Fixed in `grow.py`: parents must be inside the limit and designs near it are pushed back.

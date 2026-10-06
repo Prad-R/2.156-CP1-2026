@@ -3,6 +3,12 @@
 #
 #   sbatch -J <name> [-t HH:MM:SS] [-c N] slurm/run.sbatch <script.py> [args...]
 #
+# Default partition is mit_preemptable. When its queue is backed up, submit with
+#   -p mit_preemptable,mit_normal
+# and Slurm runs the job on whichever starts first (mit_normal: 12 h limit,
+# 96 CPUs per user; mit_normal_gpu: 6 h limit). Jobs must be preempt-safe on
+# every partition all the same.
+#
 # mit_preemptable has GraceTime=0: a preempted job is killed with no warning and
 # put back in the queue. So the python script must checkpoint periodically and
 # resume from its checkpoint on start (see slurm/ckpt.py) -- a signal handler
@@ -21,10 +27,10 @@
 
 set -uo pipefail
 
-if [[ "${SLURM_JOB_PARTITION:-}" != "mit_preemptable" ]]; then
-    echo "Refusing to run outside mit_preemptable (got '${SLURM_JOB_PARTITION:-none}')" >&2
-    exit 1
-fi
+case "${SLURM_JOB_PARTITION:-}" in
+    mit_preemptable|mit_normal|mit_normal_gpu) ;;
+    *) echo "Refusing to run on partition '${SLURM_JOB_PARTITION:-none}'" >&2; exit 1 ;;
+esac
 
 cd "${SLURM_SUBMIT_DIR}"
 
