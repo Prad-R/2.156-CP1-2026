@@ -60,6 +60,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - `publish_best.py` — per-problem best submission, auto-commit and push (works from compute nodes).
 - `advanced_starter.py` — script version of the advanced notebook (baseline only).
 - `slurm/` — `run.sbatch`, `ckpt.py`, `smoke_test.py`.
+- `report/` — LaTeX report (`report.tex`, built `report.pdf`, `figures/` copied from `results/`). Build with TeX Live: put `/orcd/software/community/001/pkg/tex-live/20251104/bin/x86_64-linux` on `PATH` (`module load` does not persist between commands) and run `pdflatex report.tex` twice in `report/`. Author names are placeholder macros at the top; `jot.md` is the user's own notes on the procedure.
 
 ## Things learned
 
