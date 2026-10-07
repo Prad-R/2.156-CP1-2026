@@ -57,7 +57,8 @@ Kept for the record; each was a controlled test of an idea for lowering distance
 |---|---|
 | `submissions/best_submission.npy` | The submission file. |
 | `submissions/best_submission.json` | Its official score, the number of designs per problem, and which run each problem's designs came from. |
-| `UPDATES.md` | Dated log of every change and result. |
+| `report/report.pdf` | The project report. |
+| `report/report.tex`, `report/figures/` | Its LaTeX source and figures (`pdflatex report.tex` twice inside `report/`). |
 
 ## Running it
 
@@ -74,11 +75,12 @@ sbatch -J verify -c 4 --mem=8G -t 00:15:00 slurm/run.sbatch verify_submission.py
 
 Each array task handles one target (or one screening worker). Without Slurm, the same scripts run directly, for example `python refine.py --target 1`.
 
-The zip is rebuilt from the committed files with:
+The zip holds the code, the course library it needs, the submission file and the report. The change log (`UPDATES.md`) and other working files stay in the repository only. It is rebuilt from the committed files with:
 
 ```bash
 git archive --format=zip --prefix=2.156_CP1_code/ -o 2.156_CP1_code.zip HEAD \
-    CODE.md UPDATES.md requirements.txt advanced_starter.py screen.py merge_screen.py refine.py refine_wide.py \
+    CODE.md requirements.txt advanced_starter.py screen.py merge_screen.py refine.py refine_wide.py \
     grow.py polish.py flip.py reshape.py diagnose.py report_best.py publish_best.py verify_submission.py linkcore.py \
-    slurm LINKS kangaroo_target_curves.npy starter_mechanism.npy submissions
+    slurm LINKS kangaroo_target_curves.npy starter_mechanism.npy \
+    submissions/best_submission.npy submissions/best_submission.json report
 ```
