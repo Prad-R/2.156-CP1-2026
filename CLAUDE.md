@@ -19,7 +19,7 @@ These apply to whoever is working in this repo, each on their own branch. The `g
 - Conda env `2.156_slides` holds WeasyPrint and poppler for the PDF deck only.
 - Conda env `2.156_cp_1` (`module load miniforge/26.7.2-0`; python at `~/.conda/envs/2.156_cp_1/bin/python`). Python 3.10, jax 0.5.3, pymoo 0.6.1, numpy 2.0.0, `gh` (logged in as `Prad-R`).
 - `conda run` does not forward stdin; call the env's python directly for heredocs.
-- Remotes: `origin` = `git@github.com:Prad-R/2.156-CP1-2026.git` (private); `upstream` = course repo, push disabled.
+- Remotes: `origin` = `git@github.com:Prad-R/2.156-CP1-2026.git` (public since 2026-10-07, user's decision, so the report's link works); `upstream` = course repo, push disabled.
 - Shared HPC login node (MIT ORCD Engaging): keep commands light and scoped; see `/etc/claude-code/CLAUDE.md`.
 
 ## Slurm facts

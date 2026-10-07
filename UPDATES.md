@@ -10,6 +10,7 @@ A running log of what has changed in this repo and why, newest first. Results wo
 - Author names in the report are placeholders (`\authorone`, `\authortwo` at the top of the file). The report describes this branch's work only.
 - Later the same day, on the user's request: team name "supo" and both authors' names set (Pradyumnan Raghuveeran, Rasmus Makela), and the prose rewritten in a more personal, narrative voice (summary section instead of an abstract, fewer lists). No numbers or figures changed.
 - Title block now reads "Team supo: both names / Report by: Pradyumnan Raghuveeran / Code: repo link"; the repo (`prads-branch`) is also linked in the last section. The repo is private, so readers need access.
+- On the user's instruction the GitHub repo `Prad-R/2.156-CP1-2026` was made public so the link in the report works; URLs in the report are now blue.
 - Build: `export PATH=/orcd/software/community/001/pkg/tex-live/20251104/bin/x86_64-linux:$PATH`, then `pdflatex report.tex` twice inside `report/`.
 
 ## 2026-10-06
