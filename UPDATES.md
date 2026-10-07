@@ -9,6 +9,7 @@ A running log of what has changed in this repo and why, newest first. Results wo
 - Re-ran `report_best.py` on the final submission (job 25179357) so the fronts and mechanism drawings match the submitted file (3.6912). Final best distance 0.052 / 0.219 / 0.441; the most accurate Kangaroo 3 design has 19 joints.
 - Author names in the report are placeholders (`\authorone`, `\authortwo` at the top of the file). The report describes this branch's work only.
 - Later the same day, on the user's request: team name "supo" and both authors' names set (Pradyumnan Raghuveeran, Rasmus Makela), and the prose rewritten in a more personal, narrative voice (summary section instead of an abstract, fewer lists). No numbers or figures changed.
+- Title block now reads "Team supo: both names / Report by: Pradyumnan Raghuveeran / Code: repo link"; the repo (`prads-branch`) is also linked in the last section. The repo is private, so readers need access.
 - Build: `export PATH=/orcd/software/community/001/pkg/tex-live/20251104/bin/x86_64-linux:$PATH`, then `pdflatex report.tex` twice inside `report/`.
 
 ## 2026-10-06

@@ -26,7 +26,11 @@
 \newcommand{\JointsThree}{2--19}
 
 \title{2.156 Challenge Problem 1: Linkage Synthesis}
-\author{Team \teamname\\[4pt] \authorone \and \authortwo}
+\newcommand{\repourl}{https://github.com/Prad-R/2.156-CP1-2026/tree/prads-branch}
+
+\author{Team \teamname: \authorone\ and \authortwo\\[6pt]
+\normalsize Report by: \authorone\\[2pt]
+\normalsize Code: \url{\repourl}}
 \date{October 2026}
 
 \begin{document}
@@ -396,7 +400,7 @@ preemptable partition. Jobs there can be killed at any moment, so all our
 scripts save a checkpoint about once a minute and pick up from it when they
 restart. Each stage merges its designs with the best submission so far,
 rescoring with the course scorer and keeping the result only if it is better.
-\texttt{CODE.md} in the code package lists what each script does and the
-commands to rerun the pipeline.
+The code is at \url{\repourl}; \texttt{CODE.md} there lists what each
+script does and the commands to rerun the pipeline.
 
 \end{document}
