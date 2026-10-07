@@ -13,10 +13,9 @@
 \graphicspath{{figures/}}
 \captionsetup{font=small,labelfont=bf}
 
-% ---- fill these in ---------------------------------------------------------
-\newcommand{\authorone}{Prad R.}            % TODO: full name
-\newcommand{\authortwo}{[Teammate name]}    % TODO: teammate's name
-% ----------------------------------------------------------------------------
+\newcommand{\teamname}{supo}
+\newcommand{\authorone}{Pradyumnan Raghuveeran}
+\newcommand{\authortwo}{Rasmus Makela}
 
 % final-submission numbers (from results/best/latest/summary.json)
 \newcommand{\BestDone}{0.052}
@@ -26,44 +25,35 @@
 \newcommand{\JointsTwo}{4--15}
 \newcommand{\JointsThree}{2--19}
 
-\title{2.156 Challenge Problem 1: Linkage Synthesis\\[2pt]
-\large Screening, gradient refinement and growth of planar linkages}
-\author{\authorone \and \authortwo}
+\title{2.156 Challenge Problem 1: Linkage Synthesis}
+\author{Team \teamname\\[4pt] \authorone \and \authortwo}
 \date{October 2026}
 
 \begin{document}
 \maketitle
 
-\begin{abstract}
-\noindent We design planar linkages whose traced curve matches three kangaroo
-outlines while using as little link material as possible. Our pipeline is a mass
-random screen of about 21 million mechanisms, gradient refinement of the best
-of them, a growth stage that adds one joint at a time, a second, much wider
-refinement, and a second round of growth. The final submission scores \textbf{3.69} with the course
-scorer (hypervolumes 5.87, 8.52 and 24.60), up from 0.045 for the advanced
-starter notebook. Most of the score comes from the screen and the first
-refinement; after that, moving joints stopped helping and only changes to the
-link layout still lowered the distance. The tail of Kangaroo~3 is the main
-feature we do not capture.
-\end{abstract}
+\section{Summary}
 
-\section{Problem}
+Our final submission scores 3.69 with the course scorer (hypervolumes 5.87,
+8.52 and 24.60 for the three kangaroos). The advanced starter notebook, run
+unchanged, gave us 0.045, so nearly all of that had to come from somewhere
+else. What ended up working was not a cleverer optimizer but a lot of random
+guessing followed by ordinary gradient descent, and then a step that lets
+mechanisms grow one joint at a time. Section~\ref{sec:approach} goes through
+these in the order we tried them, Section~\ref{sec:error} covers the things we
+tried that did not work, and Section~\ref{sec:results} has the final fronts and
+mechanisms. The short version of what we could not do: we never managed to
+trace the tail of Kangaroo~3.
 
-A mechanism is a set of joints with initial positions, rigid links between
-them, a set of grounded joints, one motor link, and one traced joint. Turning
-the motor through a full revolution makes the traced joint draw a closed curve.
-For each of three target curves we submit up to 1000 mechanisms of at most 20
-joints, and each mechanism is judged on two objectives, both minimized:
-\begin{itemize}
-\item \textbf{Distance}: the mismatch between the traced curve and the target
-after the best rotation and starting point. Scale is \emph{not} normalized, so
-the curve has to be the right size as well as the right shape.
-\item \textbf{Material}: the total length of all links.
-\end{itemize}
-A design counts only if it is strictly under both limits in
-Table~\ref{tab:problems}. The score for a target is the hypervolume its designs
-dominate relative to those limits, divided by a normalizer; the overall score is
-the mean over the three targets.
+\section{The problem as we read it}
+
+For each target curve we can submit up to 1000 mechanisms with at most 20
+joints. Each one is scored on distance (how far the traced curve is from the
+target after the best rotation and starting point) and material (total link
+length), both minimized. A mechanism only counts if it is strictly under both
+limits in Table~\ref{tab:problems}, and the score per target is the hypervolume
+with respect to those limits divided by a normalizer. The overall score is the
+mean of the three.
 
 \begin{table}[H]
 \centering
@@ -76,23 +66,26 @@ Problem & Target & Distance limit & Material limit & Normalizer \\
 3 & Kangaroo 3 (full outline) & 1.75 & 20 & 10.0 \\
 \bottomrule
 \end{tabular}
-\caption{The three problems. The limits are both the validity cutoff and the
-hypervolume reference point.}
+\caption{Limits and normalizers for the three problems.}
 \label{tab:problems}
 \end{table}
 
-Two properties of this setup shaped everything we did. First, scaling all joint
-positions by a factor scales the traced curve and the material together, so
-every mechanism has a free one-variable trade-off between the two objectives.
-Second, the hypervolume a design adds is its distance gain times the material
-headroom above it, so an accuracy gain on a cheap design is worth more than the
-same gain on a heavy one.
+Two things about this setup turned out to matter more than we expected. The
+distance is not normalized for scale, so a curve of the right shape but the
+wrong size scores badly. On the other hand, scaling every joint position by
+the same factor scales the curve and the material together, which means each
+mechanism comes with a free size knob that trades one objective for the other.
+We use this everywhere. The other thing is that hypervolume is an area: what a
+design contributes is its gain in distance multiplied by how much material
+headroom sits above it. A small accuracy gain on a cheap mechanism is worth
+more than the same gain on an expensive one, which we only really appreciated
+after stage 4 below.
 
-\section{Approach}
+\section{What we did}
+\label{sec:approach}
 
-Table~\ref{tab:stages} lists the stages in the order they ran and the official
-score after each. All scores in this report come from the course function
-\texttt{evaluate\_submission}.
+Table~\ref{tab:stages} gives the score after each stage. Every score in this
+report is from \texttt{evaluate\_submission}.
 
 \begin{table}[H]
 \centering
@@ -105,195 +98,213 @@ Starter notebook & Seeded NSGA-II, then gradient descent (Kangaroo 2 only) & 0.0
 2. Refinement & Adam on joint positions, four material weights per design & 3.43 \\
 3. Growth & Add one traced joint with two links, refine, select; 20 generations & 3.50 \\
 4. Wide refinement & About 4000 starts per target, successive halving & 3.67 \\
-5. Growth, round two & Growth again from the wide results, inside the limits & 3.69 \\
+5. Growth again & Same as stage 3, starting from the stage 4 results & 3.69 \\
 \bottomrule
 \end{tabular}
-\caption{Pipeline stages and the overall score after each.}
+\caption{Score after each stage.}
 \label{tab:stages}
 \end{table}
 
-\subsection{Stage 1: mass random screening}
+\subsection{Stage 1: guessing a lot}
 
-We started by exploring instead of optimizing. The starter's genetic algorithm
-found no feasible design from a random start and reached a score of only 0.045
-when seeded, which suggested that the hard part was finding link layouts worth
-optimizing at all. Random sampling also parallelizes trivially across cluster
-workers, which a single evolving population does not.
+We ran the starter notebook first. From a random start its GA found nothing
+feasible for a 6-joint mechanism, and seeded with 100 random mechanisms it got
+to a hypervolume of 0.2 on Kangaroo~2. Our reading of this was that the
+optimizer was not the bottleneck. The search space of link layouts is huge and
+most of it is useless, so before optimizing anything we wanted to see what
+decent mechanisms even look like. We also had access to a cluster, and random
+sampling is about the easiest thing there is to run in parallel, whereas a GA
+population has to evolve together.
 
-Each worker repeatedly samples random mechanisms with 10 to 20 joints, built so
-that every joint hangs off two earlier ones, with several random joint layouts
-per link structure. All of them are solved in one batched call. We then treat
-\emph{every} moving joint as a possible traced joint and prune its mechanism to
-the joints that actually drive it, which removes links that only add material.
-After pruning, the candidates have 4 to 9 joints.
+So the first stage just generates random mechanisms with 10 to 20 joints
+(each new joint hangs off two earlier ones, as in the course randomizer, with
+a few random joint layouts per link structure) and solves them in large
+batches. Two tricks make this far more productive than it sounds. First, we do
+not pick a traced joint in advance. Every moving joint of every mechanism is
+treated as a candidate, and for each candidate we throw away all joints that
+do not drive it, since those only add material. A random 15-joint mechanism
+therefore gives us a handful of small candidates, and after pruning they had
+between 4 and 9 joints. Second, the official metric is too slow to run on
+everything, so candidates are first ranked by a cheap shape comparison done
+with an FFT (least-squares alignment over all starting points, both
+directions, rotation and scale). Only the best 40 per target in each batch go
+to the official metric, and those are scored at nine different sizes so that
+each one gives several points along its own distance and material trade-off.
 
-Scoring every candidate with the official metric would be too slow, so the
-candidates are first ranked by a cheap shape comparison (a Fourier-domain
-least-squares alignment over all starting points, both directions, rotation and
-scale). The best 40 per target in each batch are then scored with the official
-metric at nine sizes around the best-fit scale, which turns each candidate into
-several points along its own distance and material trade-off.
-
-Four workers ran for about four hours each. In total they sampled 20.9 million
-mechanisms, screened 91.8 million candidate curves, and made 22 million
-official evaluations. With no optimization at all this gave a score of 2.78
-(Figure~\ref{fig:screenfronts}). The gains flattened early: the score was
-already 2.61 after the first worker-hour.
+Four workers ran this for about four hours each, which came to 20.9 million
+mechanisms and 22 million official evaluations. With no optimization at all
+the score was 2.78 (Figure~\ref{fig:screenfronts}). It was already 2.61 after
+the first worker-hour, so most of those four hours bought very little, and in
+hindsight we could have stopped much sooner.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{screen_fronts.png}
-\caption{Pareto fronts after screening alone (score 2.78). Shaded area is the
-hypervolume. Best distances are 0.17, 0.50 and 0.80.}
+\caption{Fronts from random screening alone (score 2.78). The shaded area is
+the hypervolume. Best distances are 0.17, 0.50 and 0.80.}
 \label{fig:screenfronts}
 \end{figure}
 
-\subsection{Stage 2: gradient refinement}
+\subsection{Stage 2: gradient descent on the good ones}
 
-For each target we took the most accurate screened designs, a fixed number per
-joint count so that larger mechanisms were represented (136 designs per
-target), and ran Adam on the joint positions for 1500 steps. Each design was
-refined four times, minimizing
+Next we took the most accurate screened mechanisms for each target and ran
+Adam on their joint positions for 1500 steps. We picked a fixed number per
+joint count instead of simply the top $N$, because otherwise the selection is
+dominated by one size; this came to 136 mechanisms per target. Each was
+optimized four times with a different weight on material,
 \[
   \text{distance} + w \cdot \text{material}, \qquad w \in \{0,\ 0.03,\ 0.1,\ 0.3\},
 \]
-so that one starting design spreads into several points along the front. Every
-intermediate step that fell inside the limits was offered to the Pareto front,
-not only the final one.
+so that one starting point spreads out into several points on the front. We
+also kept every intermediate iterate that was inside the limits, not just the
+last one, which fills in the front for free.
 
-This raised the score from 2.78 to 3.43 and cut the best distances to 0.067,
-0.30 and 0.48 (Figure~\ref{fig:progress}, blue). At this point the most accurate
-Kangaroo~3 design followed both ears, but the tail and feet were still missed,
-as were the snout and feet corners of Kangaroo~2.
+This was the single biggest improvement after screening: 2.78 to 3.43, with
+best distances down to 0.067, 0.30 and 0.48 (blue curves in
+Figure~\ref{fig:progress}). Looking at the traced curves at this point,
+Kangaroo~1 was essentially done. Kangaroo~3 had picked up both ears but its
+tail and feet were smoothed over, and Kangaroo~2 was rounding off the snout
+and the feet.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{progress.png}
 \caption{Hypervolume (top) and best distance (bottom) during refinement (blue)
-and growth round one (orange, one marker per generation). Each curve is that
-stage's own front, not the merged submission. In round one, growth selected
-parents on distance alone, so the Kangaroo~1 curve ends at a 20-joint design
-with distance 0.040 that is over the material limit and does not count; the
-best valid Kangaroo~1 distance after this stage was 0.054.}
+and the first growth run (orange, one marker per generation). These are each
+stage's own front, not the merged submission. The Kangaroo~1 growth curve is
+misleading: it ends at a 20-joint design with distance 0.040 that is over the
+material limit and so does not count. The best valid Kangaroo~1 distance after
+this stage was 0.054.}
 \label{fig:progress}
 \end{figure}
 
-\subsection{Stage 3: growth}
+\subsection{Stage 3: growing mechanisms}
 
-Refinement only moves joints; it cannot change which joints are connected. To
-capture finer features we let designs grow. Each generation, every parent gets
-96 children, each made by attaching \emph{one new traced joint with two links}
-to the parent in one of three ways:
-\begin{itemize}
-\item to the old traced joint and one of its parents, which puts the new point
-on the same rigid body, close to the old one, so the child starts out tracing
-almost the same curve;
-\item to any two existing joints;
-\item to one moving joint and a new ground joint.
-\end{itemize}
-Children are pruned, resized to the target and scored. The best 512 are refined
-for 250 Adam steps, and the next parents are the most accurate designs in each
-joint-count bin, so small and large designs both survive.
+Gradient descent can move joints around but it cannot add a link, and a
+7-joint mechanism is not going to draw a kangaroo's ears, tail and feet
+however well its joints are placed. So we wrote a step that makes mechanisms
+bigger. Each parent mechanism gets 96 children, and every child is the parent
+plus one new joint, connected by two links, which becomes the new traced
+point. The new joint is attached in one of three ways. It can go on the old
+traced joint and one of that joint's parents, which puts it on the same rigid
+body right next to the old tracer, so the child starts out drawing almost the
+same curve and has one more degree of freedom to improve it. It can go on any
+two existing joints. Or it can go on one moving joint and a new ground point.
 
-Twenty generations raised the score to 3.50 and lowered the best distances to
-0.054, 0.22 and 0.46. The largest effect was on Kangaroo~2 (0.30 to 0.22). The
-last generation found no improving child on any target.
+The children are pruned, resized and scored, the best 512 get 250 Adam steps,
+and the parents for the next generation are the most accurate mechanisms in
+each joint-count bin (so that small ones are not crowded out by large ones).
+After 20 generations the score was 3.50 and the best distances were 0.054,
+0.22 and 0.46. Kangaroo~2 benefited most, going from 0.30 to 0.22. By the last
+generation no child was beating its parent on any target.
 
-One flaw surfaced here: parents were chosen on distance alone, so some drifted
-over the material limit and their gains did not count. We changed the selection
-to keep parents inside the limits before the second round.
+We made a mistake in this run that is worth mentioning. Parents were selected
+on distance only, and some of them drifted over the material limit, where
+nothing they do counts. Kangaroo~1 reached a distance of 0.040 that way with a
+mechanism we could not submit. We fixed the selection before running growth
+again.
 
-\subsection{Stage 4: wide refinement}
+\subsection{Stage 4: a much wider refinement}
 
-The first refinement had started from only 136 designs per target, and its best
-results came from a few that happened to sit in good basins. It also contained
-no four-joint designs, although those hold the low-material end of every front.
-The wide round therefore restarts refinement from about 4000 candidates per
-target: all screening seeds and fronts, the results of stages 2 and 3, and the
-other two targets' best designs (the three outlines are versions of one shape).
-No new random mechanisms were sampled. Steps are spent by successive halving: a
-short run for all 4096, a longer one for the best 1024 (chosen per joint
-count), and a long run at several material weights for the best 192 plus 64
-cheap designs.
+Two things bothered us about stage 2. It had started from only 136 mechanisms
+per target, and the best results had come from a few of those that happened
+to land in a good basin, so it seemed likely that we were leaving good starting
+points unused. It also had no 4-joint mechanisms in it at all, because they
+are never among the most accurate, and yet 4-joint mechanisms make up the
+whole cheap end of every front.
 
-This raised the score from 3.50 to 3.67. Notably, it did \emph{not} improve the
-best distance on any target. The whole gain came from cheaper designs at the
-same accuracy, which is where hypervolume is most valuable.
+So we reran refinement from about 4000 starting points per target: every seed
+and front design from screening, everything stages 2 and 3 had produced, and
+the best designs for the other two kangaroos (the three outlines are
+variations on one shape, so we expected some transfer). To keep this
+affordable we used successive halving, with a short run for all 4096, a longer
+run for the best 1024, and a long run at several material weights for the best
+192 plus 64 of the cheap ones.
 
-\subsection{Stage 5: growth, round two}
+The score went from 3.50 to 3.67, which was more than growth had given us. What
+surprised us is that the best distance did not improve on any of the three
+targets. The entire gain was from finding cheaper mechanisms at accuracies we
+already had. That is the hypervolume-is-an-area point from Section~2 showing up
+in practice.
 
-Growth was run again from the wide results, with parents restricted to the
-material limits. It made the last improvements on all three problems and brought
-the score to 3.69. Every design set in the final file comes from this stage.
+\subsection{Stage 5: growth again}
 
-\section{Where the remaining error is}
+Finally we ran the growth step once more, starting from the stage 4 results and
+with parents kept inside the limits. This brought the score to 3.69. All three
+design sets in the submitted file come out of this last run.
 
-Since the best distances had stopped moving, we measured the error point by
-point along each target, aligning designs exactly as the scorer does
+\section{Where the error is, and things that did not work}
+\label{sec:error}
+
+Once the best distances stopped moving we wanted to know where on the outline
+the remaining error was, so we aligned our best designs to the target the same
+way the scorer does and plotted the error at every target point
 (Figure~\ref{fig:error3}).
 
-\begin{itemize}
-\item \textbf{Kangaroo 1} is matched closely everywhere.
-\item \textbf{Kangaroo 2} has no single problem area. Its most accurate design
-has several similar peaks, at the snout tip, the feet and the lower-right
-corner. Cheap six-joint designs miss the concavity between snout and feet.
-\item \textbf{Kangaroo 3} loses most on the tail, between 55 and 65\% of the
-perimeter. For the most accurate design the worst fifth of the perimeter
-carries 48\% of the distance. The ears are captured.
-\end{itemize}
+Kangaroo~1 has nothing much left to fix. Kangaroo~2 has no single bad region;
+its most accurate design has several peaks of similar height at the snout tip,
+the feet and the lower-right corner, while cheaper 6-joint designs miss the
+concave stretch between snout and feet. Kangaroo~3 is the clear case. Its
+error is concentrated on the tail, at roughly 55 to 65\% of the way around the
+perimeter, and for the most accurate design the worst fifth of the perimeter
+accounts for 48\% of the distance.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.86\linewidth]{error_3.png}
-\caption{Kangaroo 3: error at each target point (left) and along the perimeter
-(right) for three designs, as of the evening of October 5. The tail, near
-60\% of the perimeter, dominates the most accurate design's distance.}
+\caption{Kangaroo 3, error at each target point (left) and along the perimeter
+(right) for three designs. This was made partway through, on the evening of
+October 5, so the numbers differ slightly from the final file. The peak near
+60\% is the tail.}
 \label{fig:error3}
 \end{figure}
 
-The metric compares points at matching positions along the perimeter, so a
-curve that reaches part of the way into a narrow feature such as the tail earns
-little for it, and the optimizer has no easy path toward tracing it.
+We think the reason the tail is so hard is in how the metric works. Points are
+compared at matching positions along the two curves, so a traced curve that
+pokes halfway into the tail does not get half the credit. It mostly gets its
+other points pulled out of alignment. From the optimizer's side there is no
+gentle slope that leads toward drawing a tail.
 
-\subsection{Ideas that did not help}
-
-We tested three ways of lowering distance without changing the link layout.
-All were negative.
+That led to three experiments, all on existing designs and all trying to lower
+distance without changing the link layout. None of them worked
+(Table~\ref{tab:negative}).
 
 \begin{table}[H]
 \centering
-\begin{tabular}{p{3.2cm}p{7.2cm}p{4.0cm}}
+\begin{tabular}{p{3.0cm}p{7.4cm}p{4.0cm}}
 \toprule
-Idea & Test & Hypervolume change (K1 / K2 / K3) \\
+Idea & What we did & Hypervolume change (K1 / K2 / K3) \\
 \midrule
-Assembly-branch flips & Mirror a moving joint across the line through its two
-parents, keeping every link length, then refine. About 7000 flips. &
-$+0.012$ / $+0.001$ / $+0.001$ \\
-More forgiving losses & Refine first on a two-way nearest-point distance, or on
-a blurred target sharpened in steps, then finish on the official distance.
-Compared with a control on the same parents. &
-Control matched or beat both on every target \\
-Strictly improving polish & Accept only steps that improve one objective
-without worsening the other. &
-$+0.0007$ / $+0.0005$ / $+0.0012$ \\
+Flipping joints & Mirror a moving joint across the line through its two
+parents (the other way of assembling the same links), then refine. About 7000
+flips. & $+0.012$ / $+0.001$ / $+0.001$ \\
+Softer loss & Optimize first on a two-way nearest-point distance, or on a
+blurred target that is sharpened in steps, then switch to the real distance. &
+Worse than or equal to a plain control on every target \\
+Careful steps & Only accept a step if it improves one objective without
+hurting the other. & $+0.0007$ / $+0.0005$ / $+0.0012$ \\
 \bottomrule
 \end{tabular}
-\caption{Experiments on joint positions only.}
+\caption{Experiments that only move joints.}
 \label{tab:negative}
 \end{table}
 
-The forgiving-loss test was our attempt to act on the tail diagnosis: if the
-official distance gives little credit for a partly formed tail, a gentler loss
-might lead the optimizer there. It did not. For Kangaroo~3 the control reached
-a hypervolume of 24.36 against 24.27 and 24.19 for the two variants. A side
-finding was that restarting Adam on converged designs usually left them worse
-than they began, so the best point along the way has to be kept.
+The softer loss was the one we had hopes for, since it was meant to give
+partial credit for a partly formed tail. We ran it against a control that used
+the ordinary loss on the same parents, and the control won: for Kangaroo~3 it
+reached a hypervolume of 24.36, against 24.27 and 24.19 for the two softer
+variants. We also learned, a little painfully, that restarting Adam on a
+design that has already converged tends to knock it out of its minimum and
+leave it worse than it started, so one has to keep the best point seen and not
+the final one.
 
-Together with the wide refinement, these results say the front designs sit at
-true minima for their link layouts. Only structural change, the growth stage,
-still lowered distance.
+Put together with stage 4, our conclusion is that the designs on our fronts
+are at real local minima for the link layouts they have. The only thing that
+was still lowering distance by the end was changing the layout, which is what
+growth does.
 
 \section{Final results}
+\label{sec:results}
 
 \begin{table}[H]
 \centering\small
@@ -308,26 +319,26 @@ Kangaroo 3 & 1000 & 24.604 & 2.460 & \BestDthree & 0.27 & \JointsThree \\
 Overall score & & & \textbf{3.691} & & & \\
 \bottomrule
 \end{tabular}
-\caption{The final submission. The score was reproduced exactly (3.691214) by
-scoring the file from a clean copy of the course repository in a fresh process.}
+\caption{The submitted file. As a check we scored it again from a clean copy
+of the course repository and got the same number.}
 \label{tab:final}
 \end{table}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\linewidth]{fronts.png}
-\caption{Final Pareto fronts inside their limit boxes.}
+\caption{Final fronts, drawn inside their limits.}
 \label{fig:fronts}
 \end{figure}
 
-Figures~\ref{fig:best1} to \ref{fig:best3} show, for each target, the most
-accurate design, the best-balanced design (the one that alone dominates the
-largest area) and the lightest design.
+Figures~\ref{fig:best1} to \ref{fig:best3} show three mechanisms per target:
+the most accurate one, the lightest one, and what we call the best balanced
+one, meaning the single design that dominates the largest area on its own.
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\linewidth]{best_1.png}
-\caption{Kangaroo 1: mechanisms (top) and traced curves on the target (bottom).}
+\caption{Kangaroo 1. Mechanisms on top, traced curve over the target below.}
 \label{fig:best1}
 \end{figure}
 
@@ -341,48 +352,51 @@ largest area) and the lightest design.
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.92\linewidth]{best_3.png}
-\caption{Kangaroo 3. The lightest design is a bare crank tracing a circle.}
+\caption{Kangaroo 3. The lightest design is just a crank drawing a circle.}
 \label{fig:best3}
 \end{figure}
 
 \section{Discussion}
 
-\paragraph{Where the score came from.} Random screening alone reached 2.78 of
-the final 3.69, and the first refinement added 0.65 more. Everything after
-that added 0.26 in total. Of the later stages, the wide refinement added the
-most (0.17), and it did so by making designs cheaper, not more accurate.
+Looking back at Table~\ref{tab:stages}, random screening alone got us 2.78 out
+of 3.69 and the first refinement added another 0.65. Everything we did after
+that, which was most of the effort, added 0.26. If we were short on time we
+would do stages 1 and 2 and stop.
 
-\paragraph{Accuracy against material.} For Kangaroo~1 the most accurate and
-best-balanced designs are close in distance but far apart in material: the last
-0.04 of distance costs more than four times the links. Kangaroo~2 shows the
-same pattern more mildly. Kangaroo~3 is different: its most accurate and
-best-balanced designs are close in both, and its front stops near a distance of
-0.44 however much material is allowed. The material limit is not binding
-there: the most accurate design uses 4.91 of the 20 allowed. It does use 19 of
-the 20 joints allowed, but the ten joints it has beyond the best-balanced
-design lower the distance only from 0.473 to 0.441, so we see no sign that a
-higher joint limit alone would capture the missing detail. What is missing is
-a link layout that traces the tail, and our search did not find one.
+The fronts for the three targets look quite different. For Kangaroo~1 the most
+accurate and best balanced designs are close in distance (0.052 and 0.092) but
+the accurate one uses more than four times the material, so the last bit of
+accuracy is very expensive. Kangaroo~2 is similar but milder. Kangaroo~3 does
+not behave like this. Its most accurate and best balanced designs are close in
+both distance and material, and the front simply stops at about 0.44. It is
+not the material limit that stops it, since the most accurate design uses 4.91
+out of 20. That design does have 19 joints, and we wondered whether the
+20-joint limit was what held us back, but the ten joints it has beyond the
+best balanced design only take the distance from 0.473 to 0.441. We do not
+think more joints would have fixed the tail. What is missing is the right kind
+of link layout, and neither random screening nor our growth step found it.
 
-\paragraph{The bare crank.} The lightest Kangaroo~3 design is a two-joint
-crank whose circle is just inside the distance limit. The course scorer accepts
-it, but the submission page states 4 to 20 joints per mechanism, so it may not
-be counted. It is worth 0.005 of Kangaroo~3's hypervolume.
+One oddity in the submission is that the lightest Kangaroo~3 design is a bare
+crank with two joints, whose circle happens to fall just inside the distance
+limit. The course scorer accepts it. The submission page says mechanisms
+should have 4 to 20 joints, so it may not be counted there; it accounts for
+0.005 of that problem's hypervolume, so it matters very little either way.
 
-\paragraph{What we would try next.} Since joint positions are exhausted, the
-next step would be a structural search aimed at the tail: growth moves scored
-by the error in the 55 to 65\% stretch of the perimeter instead of the total
-distance, or a screen for sub-mechanisms that trace a narrow spike, attached to
-the current best body.
+If we had more time we would go after the tail directly. One option is to
+score growth candidates by their error on the tail stretch of the perimeter
+instead of the total distance, so that a child that starts to form a tail is
+kept even if it is worse overall. Another is to search separately for small
+sub-mechanisms that draw a narrow spike and attach those to the best body we
+have.
 
-\section{Compute and reproducibility}
+\section{Compute and code}
 
-Everything ran as CPU-only Slurm jobs on MIT ORCD Engaging, mostly on the
-preemptable partition, where a job can be killed without warning. Every script
-therefore checkpoints about once a minute and resumes exactly where it stopped.
-Each stage merges its designs with the current best submission per problem,
-re-scores with the course scorer, and keeps the result only if it is higher.
-The file \texttt{CODE.md} in the code package describes each script and gives
-the commands that reproduce the pipeline.
+Everything ran as CPU jobs on MIT's Engaging cluster, mostly on the
+preemptable partition. Jobs there can be killed at any moment, so all our
+scripts save a checkpoint about once a minute and pick up from it when they
+restart. Each stage merges its designs with the best submission so far,
+rescoring with the course scorer and keeping the result only if it is better.
+\texttt{CODE.md} in the code package lists what each script does and the
+commands to rerun the pipeline.
 
 \end{document}
